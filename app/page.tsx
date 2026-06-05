@@ -271,7 +271,26 @@ export default function Page() {
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
-    {tab==='clienti' && <section><input className="input" placeholder="Cerca cliente, agente, città, provincia..." value={q} onChange={e=>setQ(e.target.value)} style={{marginBottom:12}}/><div className="card table-wrap"><table><thead><tr><th>Cliente</th><th>Agente</th><th>Zona</th><th>Vendite</th><th>Ordine medio</th><th>Ultimo ordine</th><th>Visite</th><th>Top articolo</th><th>Segmento</th><th>Azione</th><th>Stato</th></tr></thead><tbody>{filteredCustomers.map(c=><tr
+    {tab==='clienti' && <section><input className="input" placeholder="Cerca cliente, agente, città, provincia..." value={q} onChange={e=>setQ(e.target.value)} style={{marginBottom:12}}
+    />
+    {selectedCustomer && (
+  <div className="card" style={{ marginBottom: 12 }}>
+    <h2>Scheda cliente</h2>
+
+    <p><b>Cliente:</b> {selectedCustomer.name}</p>
+    <p><b>Codice:</b> {selectedCustomer.code}</p>
+    <p><b>Agente:</b> {selectedCustomer.agent}</p>
+    <p><b>Città:</b> {selectedCustomer.city}</p>
+    <p><b>Provincia:</b> {selectedCustomer.province}</p>
+    <p><b>Vendite:</b> {money(selectedCustomer.amount)}</p>
+    <p><b>Ordine medio:</b> {money(selectedCustomer.avgOrder)}</p>
+    <p><b>Ultimo ordine:</b> {selectedCustomer.lastOrder || '-'}</p>
+
+    <button onClick={() => setSelectedCustomer(null)}>
+      Chiudi
+    </button>
+  </div>
+)}<div className="card table-wrap"><table><thead><tr><th>Cliente</th><th>Agente</th><th>Zona</th><th>Vendite</th><th>Ordine medio</th><th>Ultimo ordine</th><th>Visite</th><th>Top articolo</th><th>Segmento</th><th>Azione</th><th>Stato</th></tr></thead><tbody>{filteredCustomers.map(c=><tr
   key={c.code || c.name}
   onClick={() => setSelectedCustomer(c)}
   style={{ cursor: 'pointer' }}
@@ -298,6 +317,25 @@ export default function Page() {
       <Advice text={items[0] ? `Prodotto più ordinato: ${items[0].item}. Valuta riassortimento e proposta abbinata.` : 'Importa fatture per vedere i prodotti più venduti.'}/>
       <Advice text={`Ordine medio globale: ${money(invoices.length ? totalAmount / invoices.length : 0)}. Usa questo dato per confrontare agenti e clienti.`}/>
       <Advice text="Prossimo sviluppo consigliato: login agenti e database Supabase per usare l’app da più dispositivi."/>
+
+      {selectedCustomer && (
+  <div className="card" style={{ marginTop: 16 }}>
+    <h2>Scheda cliente</h2>
+    <p><b>Cliente:</b> {selectedCustomer.name}</p>
+    <p><b>Codice:</b> {selectedCustomer.code}</p>
+    <p><b>Agente:</b> {selectedCustomer.agent}</p>
+    <p><b>Zona:</b> {selectedCustomer.city} {selectedCustomer.province}</p>
+    <p><b>Vendite:</b> {money(selectedCustomer.amount)}</p>
+    <p><b>Ordine medio:</b> {money(selectedCustomer.avgOrder)}</p>
+    <p><b>Ultimo ordine:</b> {selectedCustomer.lastOrder || '-'}</p>
+    <p><b>Top articolo:</b> {selectedCustomer.topItem || '-'}</p>
+    <p><b>Stato:</b> {selectedCustomer.status}</p>
+
+    <button className="btn" onClick={() => setSelectedCustomer(null)}>
+      Chiudi scheda
+    </button>
+  </div>
+)}
     </section>}
   </main>;
 }
