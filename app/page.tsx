@@ -318,24 +318,7 @@ export default function Page() {
       <Advice text={`Ordine medio globale: ${money(invoices.length ? totalAmount / invoices.length : 0)}. Usa questo dato per confrontare agenti e clienti.`}/>
       <Advice text="Prossimo sviluppo consigliato: login agenti e database Supabase per usare l’app da più dispositivi."/>
 
-      {selectedCustomer && (
-  <div className="card" style={{ marginTop: 16 }}>
-    <h2>Scheda cliente</h2>
-    <p><b>Cliente:</b> {selectedCustomer.name}</p>
-    <p><b>Codice:</b> {selectedCustomer.code}</p>
-    <p><b>Agente:</b> {selectedCustomer.agent}</p>
-    <p><b>Zona:</b> {selectedCustomer.city} {selectedCustomer.province}</p>
-    <p><b>Vendite:</b> {money(selectedCustomer.amount)}</p>
-    <p><b>Ordine medio:</b> {money(selectedCustomer.avgOrder)}</p>
-    <p><b>Ultimo ordine:</b> {selectedCustomer.lastOrder || '-'}</p>
-    <p><b>Top articolo:</b> {selectedCustomer.topItem || '-'}</p>
-    <p><b>Stato:</b> {selectedCustomer.status}</p>
-
-    <button className="btn" onClick={() => setSelectedCustomer(null)}>
-      Chiudi scheda
-    </button>
-  </div>
-)}
+     
     </section>}
   </main>;
 }
