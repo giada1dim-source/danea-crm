@@ -385,6 +385,51 @@ export default function Page() {
   </tbody>
 </table>
 
+<h3>Articoli acquistati</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Articolo</th>
+      <th>Quantità</th>
+      <th>Totale</th>
+    </tr>
+  </thead>
+  <tbody>
+    {Object.entries(
+      invoices
+        .filter(i => i.customerCode === selectedCustomer.code)
+        .flatMap(i => i.rows)
+        .reduce((acc: any, r: any) => {
+          const key = r.description || r.code || 'Articolo senza nome';
+
+          if (!acc[key]) {
+            acc[key] = {
+              description: key,
+              qty: 0,
+              total: 0
+            };
+          }
+
+          acc[key].qty += Number(r.qty || 0);
+          acc[key].total += Number(r.total || 0);
+
+          return acc;
+        }, {})
+    )
+      .map(([, item]: any) => item)
+      .sort((a: any, b: any) => b.qty - a.qty)
+      .slice(0, 10)
+      .map((item: any) => (
+        <tr key={item.description}>
+          <td>{item.description}</td>
+          <td>{item.qty}</td>
+          <td>{money(item.total)}</td>
+        </tr>
+      ))}
+  </tbody>
+  
+</table>
 <button
   className="btn"
   onClick={() => {
