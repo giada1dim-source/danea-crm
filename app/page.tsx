@@ -334,7 +334,7 @@ export default function Page() {
     <p><b>Vendite:</b> {money(selectedCustomer.amount)}</p>
     <p><b>Ordine medio:</b> {money(selectedCustomer.avgOrder)}</p>
     <p><b>Ultimo ordine:</b> {selectedCustomer.lastOrder || '-'}</p>
-    
+
     <h3>Storico visite</h3>
 
 <table>
@@ -355,6 +355,31 @@ export default function Page() {
           <td>{v.outcome}</td>
           <td>{v.nextDate || '-'}</td>
           <td>{v.notes || '-'}</td>
+        </tr>
+      ))}
+  </tbody>
+</table>
+
+<h3>Ultime fatture</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Numero</th>
+      <th>Totale</th>
+    </tr>
+  </thead>
+  <tbody>
+    {invoices
+      .filter(i => i.customerCode === selectedCustomer.code)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 10)
+      .map(i => (
+        <tr key={i.id}>
+          <td>{i.date}</td>
+          <td>{i.number}</td>
+          <td>{money(i.total)}</td>
         </tr>
       ))}
   </tbody>
