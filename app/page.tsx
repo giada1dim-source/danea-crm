@@ -93,6 +93,8 @@ export default function Page() {
   const [saving, setSaving] = useState(false);
   const [visitForm, setVisitForm] = useState({ customerCode: '', date: new Date().toISOString().slice(0,10), outcome: 'Visita effettuata', nextDate: '', notes: '' });
 
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+
   useEffect(() => {
   if (isSupabaseConfigured()) {
     loadFromSupabase();
@@ -271,7 +273,7 @@ export default function Page() {
 
     {tab==='clienti' && <section><input className="input" placeholder="Cerca cliente, agente, città, provincia..." value={q} onChange={e=>setQ(e.target.value)} style={{marginBottom:12}}/><div className="card table-wrap"><table><thead><tr><th>Cliente</th><th>Agente</th><th>Zona</th><th>Vendite</th><th>Ordine medio</th><th>Ultimo ordine</th><th>Visite</th><th>Top articolo</th><th>Segmento</th><th>Azione</th><th>Stato</th></tr></thead><tbody>{filteredCustomers.map(c=><tr
   key={c.code || c.name}
-  onClick={() => alert(`${c.name}\nAgente: ${c.agent}\nVendite: ${money(c.amount)}\nUltimo ordine: ${c.lastOrder || '-'}`)}
+  onClick={() => setSelectedCustomer(c)}
   style={{ cursor: 'pointer' }}
 ><td><b>{c.name}</b><br/><span className="small">{c.code} · {c.email}</span></td><td>{c.agent}</td><td>{c.city} {c.province}</td><td>{money(c.amount)}</td><td>{money(c.avgOrder)}</td><td>{c.lastOrder || '-'}</td><td>{c.visits}</td><td>{c.topItem}</td><td><span className="badge">{c.segment}</span></td><td>{c.nextAction}</td><td><span className={`badge ${c.status==='Attivo'?'ok':'bad'}`}>{c.status}</span></td></tr>)}</tbody></table></div></section>}
 

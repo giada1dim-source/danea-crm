@@ -1,5 +1,1 @@
-{"timestamp":"00:00:00.886","source":"Server","level":"LOG","message":""}
-{"timestamp":"00:00:00.923","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mGoTrueClient@sb-xnburotjgihocueaayrh-auth-token:1 (2.106.2) 2026-06-01T08:46:26.686Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.\\u001b[39m\" \"\\u001b[2m(lib/supabase.ts:7:17)\\u001b[22m\""}
-{"timestamp":"00:00:00.923","source":"Browser","level":"WARN","message":"\u001b[33mGoTrueClient@sb-xnburotjgihocueaayrh-auth-token:1 (2.106.2) 2026-06-01T08:46:26.686Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.\u001b[39m"}
-{"timestamp":"00:00:01.394","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
-{"timestamp":"00:00:08.320","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:01.165","source":"Server","level":"LOG","message":""}
