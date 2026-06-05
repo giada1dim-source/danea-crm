@@ -286,6 +286,16 @@ export default function Page() {
     <p><b>Ordine medio:</b> {money(selectedCustomer.avgOrder)}</p>
     <p><b>Ultimo ordine:</b> {selectedCustomer.lastOrder || '-'}</p>
 
+<button
+  className="btn"
+  onClick={() => {
+    setVisitForm(v => ({ ...v, customerCode: selectedCustomer.code }));
+    setTab('visite');
+  }}
+>
+  Nuova visita
+</button>
+
     <button onClick={() => setSelectedCustomer(null)}>
       Chiudi
     </button>
