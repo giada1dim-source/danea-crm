@@ -334,6 +334,31 @@ export default function Page() {
     <p><b>Vendite:</b> {money(selectedCustomer.amount)}</p>
     <p><b>Ordine medio:</b> {money(selectedCustomer.avgOrder)}</p>
     <p><b>Ultimo ordine:</b> {selectedCustomer.lastOrder || '-'}</p>
+    
+    <h3>Storico visite</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Esito</th>
+      <th>Prossima</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    {visits
+      .filter(v => v.customerCode === selectedCustomer.code)
+      .map(v => (
+        <tr key={v.id}>
+          <td>{v.date}</td>
+          <td>{v.outcome}</td>
+          <td>{v.nextDate || '-'}</td>
+          <td>{v.notes || '-'}</td>
+        </tr>
+      ))}
+  </tbody>
+</table>
 
 <button
   className="btn"
