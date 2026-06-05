@@ -183,8 +183,57 @@ export default function Page() {
 
   async function handleCustomersFile(file: File) { const buf = await file.arrayBuffer(); const parsed = parseCustomersWorkbook(buf); setCustomers(parsed); setMessage(`Importati ${parsed.length} clienti dal file Excel.`); }
   async function handleInvoicesFile(file: File) { const text = await file.text(); const parsed = parseInvoicesXml(text); setInvoices(parsed); setMessage(`Importate ${parsed.length} fatture/documenti dal file XML.`); }
-  function addVisit() { const c = mergedCustomers.find(x => x.code === visitForm.customerCode); if (!c) return alert('Seleziona un cliente.'); setVisits(v => [{ id: crypto.randomUUID(), customerCode: c.code, customerName: c.name, agent: c.agent, date: visitForm.date, outcome: visitForm.outcome, nextDate: visitForm.nextDate, notes: visitForm.notes }, ...v]); setVisitForm({ customerCode: '', date: new Date().toISOString().slice(0,10), outcome: 'Visita effettuata', nextDate: '', notes: '' }); }
+ async function addVisit() {
+  const c = mergedCustomers.find(
+    x => x.code === visitForm.customerCode
+  );
 
+  if (!c) {
+    alert('Seleziona un cliente.');
+    return;
+  }
+
+  const nuovaVisita = {
+    id: crypto.randomUUID(),
+    customerCode: c.code,
+    customerName: c.name,
+    agent: c.agent,
+    date: visitForm.date,
+    outcome: visitForm.outcome,
+    nextDate: visitForm.nextDate,
+    notes: visitForm.notes
+  };
+
+  setVisits(v => [nuovaVisita, ...v]);
+
+  if (supabase) {
+    const { error } = await supabase
+      .from('visite')
+      .insert({
+        id: nuovaVisita.id,
+        date: nuovaVisita.date,
+        customer_code: nuovaVisita.customerCode,
+        customer_name: nuovaVisita.customerName,
+        agent: nuovaVisita.agent,
+        outcome: nuovaVisita.outcome,
+        next_date: nuovaVisita.nextDate || null,
+        notes: nuovaVisita.notes
+      });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+  }
+
+  setVisitForm({
+    customerCode: '',
+    date: new Date().toISOString().slice(0,10),
+    outcome: 'Visita effettuata',
+    nextDate: '',
+    notes: ''
+  });
+}
   async function saveToSupabase() {
     if (!supabase) return alert('Supabase non è configurato. Crea .env.local con URL e anon key.');
     setSaving(true);
