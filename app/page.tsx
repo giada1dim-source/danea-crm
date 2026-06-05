@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { Upload, Users, BriefcaseBusiness, MapPin, CalendarCheck, Lightbulb, Package, Euro, AlertTriangle, Globe2, Database, Download, ClipboardList, Cloud, CloudOff } from 'lucide-react';
@@ -92,6 +92,12 @@ export default function Page() {
   const [message, setMessage] = useState(isSupabaseConfigured() ? 'Supabase configurato. Puoi caricare i file e salvare nel database.' : 'Carica clienti danea.xlsx e fatture.DefXml. Per salvare online configura Supabase nel file .env.local.');
   const [saving, setSaving] = useState(false);
   const [visitForm, setVisitForm] = useState({ customerCode: '', date: new Date().toISOString().slice(0,10), outcome: 'Visita effettuata', nextDate: '', notes: '' });
+
+  useEffect(() => {
+  if (isSupabaseConfigured()) {
+    loadFromSupabase();
+  }
+}, []);
 
   const mergedCustomers = useMemo(() => {
     const m = new Map<string, any>();
