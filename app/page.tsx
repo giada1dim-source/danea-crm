@@ -434,11 +434,36 @@ export default function Page() {
       Chiudi
     </button>
   </div>
-)}<div className="card table-wrap"><table><thead><tr><th>Cliente</th><th>Agente</th><th>Zona</th><th>Vendite</th><th>Ordine medio</th><th>Ultimo ordine</th><th>Visite</th><th>Top articolo</th><th>Segmento</th><th>Azione</th><th>Stato</th></tr></thead><tbody>{filteredCustomers.map(c=><tr
+)}<div className="card table-wrap"><table><thead><tr><th>Cliente</th><th>Agente</th><th>Zona</th><th>Vendite</th><th>Ordine medio</th><th>Ultimo ordine</th><th>Visite</th><th>Top articolo</th><th>Segmento</th><th>Azione</th><th>Semaforo</th><th>Stato</th></tr></thead><tbody>{filteredCustomers.map(c=><tr
   key={c.code || c.name}
   onClick={() => setSelectedCustomer(c)}
   style={{ cursor: 'pointer' }}
-><td><b>{c.name}</b><br/><span className="small">{c.code} · {c.email}</span></td><td>{c.agent}</td><td>{c.city} {c.province}</td><td>{money(c.amount)}</td><td>{money(c.avgOrder)}</td><td>{c.lastOrder || '-'}</td><td>{c.visits}</td><td>{c.topItem}</td><td><span className="badge">{c.segment}</span></td><td>{c.nextAction}</td><td><span className={`badge ${c.status==='Attivo'?'ok':'bad'}`}>{c.status}</span></td></tr>)}</tbody></table></div></section>}
+><td><b>{c.name}</b><br/><span className="small">{c.code} · {c.email}</span></td><td>{c.agent}</td><td>{c.city} {c.province}</td><td>{money(c.amount)}</td><td>{money(c.avgOrder)}</td><td>{c.lastOrder || '-'}</td><td>{c.visits}</td><td>{c.topItem}</td><td><span className="badge">{c.segment}</span></td><td>{c.nextAction}</td>
+
+<td>
+  {c.lastOrder
+    ? (
+      (() => {
+        const giorni = Math.floor(
+          (new Date().getTime() - new Date(c.lastOrder).getTime()) /
+          (1000 * 60 * 60 * 24)
+        );
+
+        return giorni <= 60
+          ? '🟢'
+          : giorni <= 120
+          ? '🟡'
+          : '🔴';
+      })()
+    )
+    : '🔴'}
+</td>
+
+<td>
+  <span className={`badge ${c.status==='Attivo'?'ok':'bad'}`}>
+    {c.status}
+  </span>
+</td></tr>)}</tbody></table></div></section>}
 
     {tab==='agenti' && <section className="grid"><div className="grid grid-2"><Panel title="Vendite per agente"><ResponsiveContainer width="100%" height={320}><BarChart data={agents}><XAxis dataKey="agent"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Bar dataKey="amount"/></BarChart></ResponsiveContainer></Panel><Panel title="Clienti attivi/inattivi"><ResponsiveContainer width="100%" height={320}><BarChart data={agents}><XAxis dataKey="agent"/><YAxis/><Tooltip/><Bar dataKey="active" stackId="a"/><Bar dataKey="inactive" stackId="a"/></BarChart></ResponsiveContainer></Panel></div><div className="card table-wrap"><table><thead><tr><th>Agente</th><th>Clienti</th><th>Vendite</th><th>Ordine medio</th><th>Visite medie</th><th>Clienti sotto visite</th><th>Zone</th></tr></thead><tbody>{agents.map(a=><tr key={a.agent}><td><b>{a.agent}</b></td><td>{a.customers}</td><td>{money(a.amount)}</td><td>{money(a.avgOrder)}</td><td>{a.avgVisits.toFixed(1)}</td><td><span className={`badge ${a.lowVisit?'warn':'ok'}`}>{a.lowVisit}</span></td><td>{a.zonesText}</td></tr>)}</tbody></table></div></section>}
 
