@@ -554,30 +554,26 @@ export default function Page() {
   <div className="card" style={{padding:18}}>
     <h2>Calendario visite</h2>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Cliente</th>
-          <th>Agente</th>
-          <th>Esito</th>
-          <th>Prossima visita</th>
-        </tr>
-      </thead>
-      <tbody>
-        {visits
-          .sort((a,b)=>a.date.localeCompare(b.date))
-          .map(v=>(
-            <tr key={v.id}>
-              <td>{v.date}</td>
-              <td>{v.customerName}</td>
-              <td>{v.agent}</td>
-              <td>{v.outcome}</td>
-              <td>{v.nextDate || '-'}</td>
-            </tr>
-          ))}
-      </tbody>
-    </table>
+    <h3>🟢 Visite di oggi</h3>
+    <AgendaTable
+      rows={visits
+        .filter(v => v.date === new Date().toISOString().slice(0,10))
+        .sort((a,b)=>a.customerName.localeCompare(b.customerName))}
+    />
+
+    <h3>📅 Visite future programmate</h3>
+    <AgendaTable
+      rows={visits
+        .filter(v => v.nextDate && v.nextDate > new Date().toISOString().slice(0,10))
+        .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
+    />
+
+    <h3>📋 Storico visite effettuate</h3>
+    <AgendaTable
+      rows={visits
+        .filter(v => v.date < new Date().toISOString().slice(0,10))
+        .sort((a,b)=>b.date.localeCompare(a.date))}
+    />
   </div>
 </section>
 )}
