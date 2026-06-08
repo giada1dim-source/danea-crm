@@ -316,7 +316,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'richiami', 'topclienti', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'richiami', 'topclienti', 'crescita', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -654,6 +654,130 @@ export default function Page() {
               <td>{c.agent}</td>
               <td>{money(c.amount)}</td>
               <td>{c.lastOrder || '-'}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+)}
+
+{tab==='crescita' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Crescita e calo clienti</h2>
+
+    <h3>🟢 Clienti in crescita</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Ultimi 6 mesi</th>
+          <th>6 mesi precedenti</th>
+          <th>Crescita</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .map(c => {
+            const oggi = new Date();
+            const seiMesiFa = new Date();
+            seiMesiFa.setMonth(oggi.getMonth() - 6);
+
+            const dodiciMesiFa = new Date();
+            dodiciMesiFa.setMonth(oggi.getMonth() - 12);
+
+            const fatturatoUltimi6 = invoices
+              .filter(i => i.customerCode === c.code)
+              .filter(i => new Date(i.date) >= seiMesiFa)
+              .reduce((sum, i) => sum + i.total, 0);
+
+            const fatturatoPrecedenti6 = invoices
+              .filter(i => i.customerCode === c.code)
+              .filter(i => {
+                const d = new Date(i.date);
+                return d >= dodiciMesiFa && d < seiMesiFa;
+              })
+              .reduce((sum, i) => sum + i.total, 0);
+
+            const differenza = fatturatoUltimi6 - fatturatoPrecedenti6;
+
+            return {
+              ...c,
+              fatturatoUltimi6,
+              fatturatoPrecedenti6,
+              differenza
+            };
+          })
+          .filter(c => c.differenza > 0)
+          .sort((a,b)=>b.differenza-a.differenza)
+          .slice(0,50)
+          .map(c=>(
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{money(c.fatturatoUltimi6)}</td>
+              <td>{money(c.fatturatoPrecedenti6)}</td>
+              <td>+{money(c.differenza)}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+
+    <h3>🔴 Clienti in calo</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Ultimi 6 mesi</th>
+          <th>6 mesi precedenti</th>
+          <th>Calo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .map(c => {
+            const oggi = new Date();
+            const seiMesiFa = new Date();
+            seiMesiFa.setMonth(oggi.getMonth() - 6);
+
+            const dodiciMesiFa = new Date();
+            dodiciMesiFa.setMonth(oggi.getMonth() - 12);
+
+            const fatturatoUltimi6 = invoices
+              .filter(i => i.customerCode === c.code)
+              .filter(i => new Date(i.date) >= seiMesiFa)
+              .reduce((sum, i) => sum + i.total, 0);
+
+            const fatturatoPrecedenti6 = invoices
+              .filter(i => i.customerCode === c.code)
+              .filter(i => {
+                const d = new Date(i.date);
+                return d >= dodiciMesiFa && d < seiMesiFa;
+              })
+              .reduce((sum, i) => sum + i.total, 0);
+
+            const differenza = fatturatoUltimi6 - fatturatoPrecedenti6;
+
+            return {
+              ...c,
+              fatturatoUltimi6,
+              fatturatoPrecedenti6,
+              differenza
+            };
+          })
+          .filter(c => c.differenza < 0)
+          .sort((a,b)=>a.differenza-b.differenza)
+          .slice(0,50)
+          .map(c=>(
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{money(c.fatturatoUltimi6)}</td>
+              <td>{money(c.fatturatoPrecedenti6)}</td>
+              <td>{money(c.differenza)}</td>
             </tr>
           ))}
       </tbody>
