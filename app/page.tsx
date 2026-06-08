@@ -317,7 +317,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'richiami', 'topclienti', 'crescita', 'opportunita', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'richiami', 'topclienti', 'crescita', 'opportunita', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -545,6 +545,39 @@ export default function Page() {
         .filter(v => v.nextDate && v.nextDate > new Date().toISOString().slice(0,10))
         .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
     />
+  </div>
+</section>
+)}
+
+{tab==='calendario' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Calendario visite</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Esito</th>
+          <th>Prossima visita</th>
+        </tr>
+      </thead>
+      <tbody>
+        {visits
+          .sort((a,b)=>a.date.localeCompare(b.date))
+          .map(v=>(
+            <tr key={v.id}>
+              <td>{v.date}</td>
+              <td>{v.customerName}</td>
+              <td>{v.agent}</td>
+              <td>{v.outcome}</td>
+              <td>{v.nextDate || '-'}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
   </div>
 </section>
 )}
