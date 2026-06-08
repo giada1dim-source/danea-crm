@@ -316,7 +316,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda','zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'richiami', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -494,6 +494,82 @@ export default function Page() {
         .filter(v => v.nextDate && v.nextDate > new Date().toISOString().slice(0,10))
         .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
     />
+  </div>
+</section>
+)}
+
+{tab==='richiami' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Richiami automatici</h2>
+
+    <h3>🔴 Clienti fermi da oltre 120 giorni</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Ultimo ordine</th>
+          <th>Vendite</th>
+          <th>Azione</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .filter(c => {
+            if (!c.lastOrder) return true;
+            const giorni = Math.floor(
+              (new Date().getTime() - new Date(c.lastOrder).getTime()) /
+              (1000 * 60 * 60 * 24)
+            );
+            return giorni > 120;
+          })
+          .slice(0, 50)
+          .map(c => (
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{c.lastOrder || '-'}</td>
+              <td>{money(c.amount)}</td>
+              <td>Richiamare</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+
+    <h3>🟡 Clienti da tenere sotto controllo</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Ultimo ordine</th>
+          <th>Vendite</th>
+          <th>Azione</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .filter(c => {
+            if (!c.lastOrder) return false;
+            const giorni = Math.floor(
+              (new Date().getTime() - new Date(c.lastOrder).getTime()) /
+              (1000 * 60 * 60 * 24)
+            );
+            return giorni > 60 && giorni <= 120;
+          })
+          .slice(0, 50)
+          .map(c => (
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{c.lastOrder}</td>
+              <td>{money(c.amount)}</td>
+              <td>Controllare</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
   </div>
 </section>
 )}
