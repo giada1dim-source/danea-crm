@@ -459,33 +459,26 @@ export default function Page() {
   <div className="card" style={{padding:18}}>
     <h2>Agenda visite</h2>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Cliente</th>
-          <th>Agente</th>
-          <th>Esito</th>
-          <th>Note</th>
-        </tr>
-      </thead>
+    <h3>🔴 Visite in ritardo</h3>
+    <AgendaTable
+      rows={visits
+        .filter(v => v.nextDate && v.nextDate < new Date().toISOString().slice(0,10))
+        .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
+    />
 
-      <tbody>
-        {visits
-          .filter(v => v.nextDate)
-          .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))
-          .map(v => (
-            <tr key={v.id}>
-              <td>{v.nextDate}</td>
-              <td>{v.customerName}</td>
-              <td>{v.agent}</td>
-              <td>{v.outcome}</td>
-              <td>{v.notes}</td>
-            </tr>
-          ))}
-      </tbody>
-    </table>
+    <h3>🟢 Visite di oggi</h3>
+    <AgendaTable
+      rows={visits
+        .filter(v => v.nextDate === new Date().toISOString().slice(0,10))
+        .sort((a,b)=>a.customerName.localeCompare(b.customerName))}
+    />
 
+    <h3>📅 Visite future</h3>
+    <AgendaTable
+      rows={visits
+        .filter(v => v.nextDate && v.nextDate > new Date().toISOString().slice(0,10))
+        .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
+    />
   </div>
 </section>
 )}
@@ -516,3 +509,33 @@ export default function Page() {
 function Kpi({icon,label,value}: any) { return <div className="card" style={{padding:18}}><div className="small" style={{display:'flex',justifyContent:'space-between'}}>{label}{React.cloneElement(icon,{size:18})}</div><div style={{fontSize:26,fontWeight:800,marginTop:8}}>{value}</div></div> }
 function Panel({title, children}: any) { return <div className="card" style={{padding:18}}><h2 style={{marginTop:0}}>{title}</h2>{children}</div> }
 function Advice({text}: {text:string}) { return <div className="card" style={{padding:18, display:'flex', gap:12}}><Lightbulb size={22}/><p style={{margin:0}}>{text}</p></div> }
+function AgendaTable({ rows }: any) {
+  if (!rows.length) {
+    return <p className="small">Nessuna visita.</p>;
+  }
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Esito</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((v: any) => (
+          <tr key={v.id}>
+            <td>{v.nextDate}</td>
+            <td>{v.customerName}</td>
+            <td>{v.agent}</td>
+            <td>{v.outcome}</td>
+            <td>{v.notes || '-'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
