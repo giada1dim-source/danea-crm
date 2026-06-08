@@ -316,7 +316,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'richiami', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'richiami', 'topclienti', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -566,6 +566,94 @@ export default function Page() {
               <td>{c.lastOrder}</td>
               <td>{money(c.amount)}</td>
               <td>Controllare</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+)}
+
+{tab==='topclienti' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Top clienti</h2>
+
+    <h3>🏆 Top 50 per fatturato</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Pos.</th>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Fatturato</th>
+          <th>Ultimo ordine</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .sort((a,b)=>b.amount-a.amount)
+          .slice(0,50)
+          .map((c,index)=>(
+            <tr key={c.code || c.name}>
+              <td>{index + 1}</td>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{money(c.amount)}</td>
+              <td>{c.lastOrder || '-'}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+
+    <h3>📞 Top 50 per visite</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Pos.</th>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Visite</th>
+          <th>Fatturato</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .sort((a,b)=>b.visits-a.visits)
+          .slice(0,50)
+          .map((c,index)=>(
+            <tr key={c.code || c.name}>
+              <td>{index + 1}</td>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{c.visits}</td>
+              <td>{money(c.amount)}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+
+    <h3>⚠️ Clienti senza visite</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Fatturato</th>
+          <th>Ultimo ordine</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .filter(c=>c.visits===0)
+          .sort((a,b)=>b.amount-a.amount)
+          .slice(0,50)
+          .map(c=>(
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{money(c.amount)}</td>
+              <td>{c.lastOrder || '-'}</td>
             </tr>
           ))}
       </tbody>
