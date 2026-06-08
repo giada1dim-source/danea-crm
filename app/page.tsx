@@ -94,6 +94,7 @@ export default function Page() {
   const [visitForm, setVisitForm] = useState({ customerCode: '', date: new Date().toISOString().slice(0,10), outcome: 'Visita effettuata', nextDate: '', notes: '' });
 
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<any | null>(null);
 
   useEffect(() => {
   if (isSupabaseConfigured()) {
@@ -465,7 +466,57 @@ export default function Page() {
   </span>
 </td></tr>)}</tbody></table></div></section>}
 
-    {tab==='agenti' && <section className="grid"><div className="grid grid-2"><Panel title="Vendite per agente"><ResponsiveContainer width="100%" height={320}><BarChart data={agents}><XAxis dataKey="agent"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Bar dataKey="amount"/></BarChart></ResponsiveContainer></Panel><Panel title="Clienti attivi/inattivi"><ResponsiveContainer width="100%" height={320}><BarChart data={agents}><XAxis dataKey="agent"/><YAxis/><Tooltip/><Bar dataKey="active" stackId="a"/><Bar dataKey="inactive" stackId="a"/></BarChart></ResponsiveContainer></Panel></div><div className="card table-wrap"><table><thead><tr><th>Agente</th><th>Clienti</th><th>Vendite</th><th>Ordine medio</th><th>Visite medie</th><th>Clienti sotto visite</th><th>Zone</th></tr></thead><tbody>{agents.map(a=><tr key={a.agent}><td><b>{a.agent}</b></td><td>{a.customers}</td><td>{money(a.amount)}</td><td>{money(a.avgOrder)}</td><td>{a.avgVisits.toFixed(1)}</td><td><span className={`badge ${a.lowVisit?'warn':'ok'}`}>{a.lowVisit}</span></td><td>{a.zonesText}</td></tr>)}</tbody></table></div></section>}
+    {tab==='agenti' && <section className="grid"><div className="grid grid-2"><Panel title="Vendite per agente"><ResponsiveContainer width="100%" height={320}><BarChart data={agents}><XAxis dataKey="agent"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Bar dataKey="amount"/></BarChart></ResponsiveContainer></Panel><Panel title="Clienti attivi/inattivi"><ResponsiveContainer width="100%" height={320}><BarChart data={agents}><XAxis dataKey="agent"/><YAxis/><Tooltip/><Bar dataKey="active" stackId="a"/><Bar dataKey="inactive" stackId="a"/></BarChart></ResponsiveContainer></Panel></div><div className="card table-wrap"><table><thead><tr><th>Agente</th><th>Clienti</th><th>Vendite</th><th>Ordine medio</th><th>Visite medie</th><th>Clienti sotto visite</th><th>Zone</th></tr></thead><tbody>{agents.map(a=><tr key={a.agent}>
+  <td
+    style={{ cursor: 'pointer' }}
+    onClick={() => setSelectedAgent(a)}
+  >
+    <b>{a.agent}</b>
+  </td>
+  <td>{a.customers}</td><td>{money(a.amount)}</td><td>{money(a.avgOrder)}</td><td>{a.avgVisits.toFixed(1)}</td><td><span className={`badge ${a.lowVisit?'warn':'ok'}`}>{a.lowVisit}</span></td><td>{a.zonesText}</td></tr>)}</tbody></table></div></section>}
+
+{tab==='agenti' && selectedAgent && (
+  <div className="card" style={{padding:18, marginTop:16}}>
+    <h2>Scheda agente: {selectedAgent.agent}</h2>
+
+    <p><b>Clienti:</b> {selectedAgent.customers}</p>
+    <p><b>Fatturato:</b> {money(selectedAgent.amount)}</p>
+    <p><b>Ordine medio:</b> {money(selectedAgent.avgOrder)}</p>
+    <p><b>Visite medie:</b> {selectedAgent.avgVisits.toFixed(1)}</p>
+    <p><b>Clienti sotto visite:</b> {selectedAgent.lowVisit}</p>
+    <p><b>Zone:</b> {selectedAgent.zonesText}</p>
+
+    <h3>Top clienti agente</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Fatturato</th>
+          <th>Ultimo ordine</th>
+          <th>Visite</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .filter(c => c.agent === selectedAgent.agent)
+          .sort((a,b)=>b.amount-a.amount)
+          .slice(0,10)
+          .map(c=>(
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{money(c.amount)}</td>
+              <td>{c.lastOrder || '-'}</td>
+              <td>{c.visits}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+
+    <button onClick={() => setSelectedAgent(null)}>
+      Chiudi scheda agente
+    </button>
+  </div>
+)}
 
     {tab==='visite' && <section className="grid grid-2"><div className="card" style={{padding:18}}><h2>Registra visita</h2><select className="input" value={visitForm.customerCode} onChange={e=>setVisitForm({...visitForm, customerCode:e.target.value})}><option value="">Seleziona cliente</option>{mergedCustomers.map(c=><option key={c.code || c.name} value={c.code}>{c.name} — {c.agent}</option>)}</select><br/><br/><input className="input" type="date" value={visitForm.date} onChange={e=>setVisitForm({...visitForm,date:e.target.value})}/><br/><br/><select className="input" value={visitForm.outcome} onChange={e=>setVisitForm({...visitForm,outcome:e.target.value})}><option>Visita effettuata</option><option>Cliente interessato</option><option>Ordine previsto</option><option>Nessun interesse</option><option>Cliente chiuso / da recuperare</option></select><br/><br/><input className="input" type="date" value={visitForm.nextDate} onChange={e=>setVisitForm({...visitForm,nextDate:e.target.value})}/><br/><br/><textarea className="input" placeholder="Note visita" value={visitForm.notes} onChange={e=>setVisitForm({...visitForm,notes:e.target.value})}/><br/><br/><button className="btn" onClick={addVisit}>Salva visita</button> <button className="btn secondary" onClick={exportVisits}>Esporta visite</button></div><div className="card table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Agente</th><th>Esito</th><th>Prossima</th><th>Note</th></tr></thead><tbody>{visits.map(v=><tr key={v.id}><td>{v.date}</td><td>{v.customerName}</td><td>{v.agent}</td><td>{v.outcome}</td><td>{v.nextDate}</td><td>{v.notes}</td></tr>)}</tbody></table></div></section>}
 
