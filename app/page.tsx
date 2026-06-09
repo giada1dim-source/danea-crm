@@ -95,6 +95,41 @@ export default function Page() {
 
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<any | null>(null);
+  const [userEmail, setUserEmail] = useState('');
+const [loginEmail, setLoginEmail] = useState('');
+const [loginPassword, setLoginPassword] = useState('');
+const [currentProfile, setCurrentProfile] = useState<any | null>(null);
+async function login() {
+  if (!supabase) return alert('Supabase non configurato');
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: loginEmail,
+    password: loginPassword
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  const user = data.user;
+
+  setUserEmail(user.email || '');
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError) {
+    alert('Profilo agente non trovato');
+    return;
+  }
+
+  setCurrentProfile(profile);
+  alert(`Accesso effettuato: ${profile.agent_name}`);
+}
 
   function planVisit(c: any) {
   setVisitForm(v => ({
@@ -135,6 +170,42 @@ export default function Page() {
       return { ...c, province: c.province || 'ND', country: c.country || 'Italia', segment: customerSegment(c), agent: c.agent || 'Senza agente', status: daysSince(c.lastOrder) <= inactiveDays ? 'Attivo' : 'Inattivo', topItem: top ? top[0] : '-', avgOrder: c.orders ? c.amount / c.orders : 0, nextAction: !c.lastOrder ? 'Verifica anagrafica' : daysSince(c.lastOrder) > 180 ? 'Recupero urgente' : daysSince(c.lastOrder) > inactiveDays ? 'Richiamare' : c.visits < 1 ? 'Prima visita' : 'Monitorare' }; 
     });
   }, [customers, invoices, visits]);
+
+const visibleCustomers = useMemo(() => {
+  if (!currentProfile) return mergedCustomers;
+
+  if (currentProfile.role === 'admin') {
+    return mergedCustomers;
+  }
+
+  return mergedCustomers.filter(
+    c => c.agent === currentProfile.agent_name
+  );
+}, [mergedCustomers, currentProfile]);
+
+const visibleInvoices = useMemo(() => {
+  if (!currentProfile) return invoices;
+
+  if (currentProfile.role === 'admin') {
+    return invoices;
+  }
+
+  return invoices.filter(
+    i => i.agent === currentProfile.agent_name
+  );
+}, [invoices, currentProfile]);
+
+const visibleVisits = useMemo(() => {
+  if (!currentProfile) return visits;
+
+  if (currentProfile.role === 'admin') {
+    return visits;
+  }
+
+  return visits.filter(
+    v => v.agent === currentProfile.agent_name
+  );
+}, [visits, currentProfile]);
 
   const agents = useMemo(() => {
     const m = new Map<string, any>();
@@ -191,9 +262,21 @@ export default function Page() {
     return Array.from(m.entries()).map(([month, amount]) => ({ month, amount })).sort((a,b)=>a.month.localeCompare(b.month));
   }, [invoices]);
 
-  const filteredCustomers = mergedCustomers.filter(c => `${c.name} ${c.code} ${c.agent} ${c.city} ${c.province}`.toLowerCase().includes(q.toLowerCase()));
-  const totalAmount = invoices.reduce((s,i)=>s+i.total,0); const totalQty = invoices.reduce((s,i)=>s+i.rows.reduce((a,r)=>a+r.qty,0),0);
-  const inactive = mergedCustomers.filter(c=>c.status==='Inattivo').length; const unassigned = mergedCustomers.filter(c=>c.agent==='Senza agente').length;
+  const filteredCustomers = visibleCustomers.filter(c => `${c.name} ${c.code} ${c.agent} ${c.city} ${c.province}`.toLowerCase().includes(q.toLowerCase()));
+  const totalAmount = visibleInvoices.reduce((s, i) => s + i.total, 0);
+
+const totalQty = visibleInvoices.reduce(
+  (s, i) => s + i.rows.reduce((a, r) => a + r.qty, 0),
+  0
+);
+
+const inactive = visibleCustomers.filter(
+  c => c.status === 'Inattivo'
+).length;
+
+const unassigned = visibleCustomers.filter(
+  c => c.agent === 'Senza agente'
+).length;
 
   async function handleCustomersFile(file: File) { const buf = await file.arrayBuffer(); const parsed = parseCustomersWorkbook(buf); setCustomers(parsed); setMessage(`Importati ${parsed.length} clienti dal file Excel.`); }
   async function handleInvoicesFile(file: File) { const text = await file.text(); const parsed = parseInvoicesXml(text); setInvoices(parsed); setMessage(`Importate ${parsed.length} fatture/documenti dal file XML.`); }
@@ -270,7 +353,7 @@ export default function Page() {
         }
       }
 
-      const visitRows = visits.map(v => ({ id: v.id, date: v.date, customer_code: v.customerCode, customer_name: v.customerName, agent: v.agent, outcome: v.outcome, next_date: v.nextDate || null, notes: v.notes }));
+      const visitRows = visibleVisits.map(v => ({ id: v.id, date: v.date, customer_code: v.customerCode, customer_name: v.customerName, agent: v.agent, outcome: v.outcome, next_date: v.nextDate || null, notes: v.notes }));
       if (visitRows.length) {
         const { error } = await supabase.from('visite').upsert(visitRows, { onConflict: 'id' });
         if (error) throw error;
@@ -321,11 +404,44 @@ export default function Page() {
         <button className="btn secondary" onClick={loadFromSupabase} disabled={saving}><Database size={16}/> Carica DB</button>
       </div>
     </header>
+    <div className="card" style={{padding:18, marginBottom:16}}>
+  <h2>Login agente</h2>
+
+  {currentProfile ? (
+    <div>
+      <p>
+        Accesso effettuato come <b>{currentProfile.agent_name}</b>
+      </p>
+      <p className="small">{userEmail}</p>
+    </div>
+  ) : (
+    <div className="grid grid-2">
+      <input
+        className="input"
+        placeholder="Email"
+        value={loginEmail}
+        onChange={e => setLoginEmail(e.target.value)}
+      />
+
+      <input
+        className="input"
+        type="password"
+        placeholder="Password"
+        value={loginPassword}
+        onChange={e => setLoginPassword(e.target.value)}
+      />
+
+      <button className="btn" onClick={login}>
+        Accedi
+      </button>
+    </div>
+  )}
+</div>
     <div className="card" style={{padding:14, marginBottom:16}}>{message}</div>
     <section className="grid grid-4" style={{marginBottom:18}}>
       <Kpi icon={<Euro/>} label="Fatturato" value={money(totalAmount)} />
       <Kpi icon={<Package/>} label="Pezzi venduti" value={Math.round(totalQty)} />
-      <Kpi icon={<Users/>} label="Clienti" value={mergedCustomers.length} />
+      <Kpi icon={<Users/>} label="Clienti" value={visibleCustomers.length} />
       <Kpi icon={<AlertTriangle/>} label="Inattivi / senza agente" value={`${inactive} / ${unassigned}`} />
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
@@ -666,21 +782,21 @@ Visite future: ${visiteFuture}
 
     <h3>🔴 Visite in ritardo</h3>
     <AgendaTable
-      rows={visits
+      rows={visibleVisits
         .filter(v => v.nextDate && v.nextDate < new Date().toISOString().slice(0,10))
         .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
     />
 
     <h3>🟢 Visite di oggi</h3>
     <AgendaTable
-      rows={visits
+      rows={visibleVisits
         .filter(v => v.nextDate === new Date().toISOString().slice(0,10))
         .sort((a,b)=>a.customerName.localeCompare(b.customerName))}
     />
 
     <h3>📅 Visite future</h3>
     <AgendaTable
-      rows={visits
+      rows={visibleVisits
         .filter(v => v.nextDate && v.nextDate > new Date().toISOString().slice(0,10))
         .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
     />
@@ -695,21 +811,21 @@ Visite future: ${visiteFuture}
 
     <h3>🟢 Visite di oggi</h3>
     <AgendaTable
-      rows={visits
+      rows={visibleVisits
         .filter(v => v.date === new Date().toISOString().slice(0,10))
         .sort((a,b)=>a.customerName.localeCompare(b.customerName))}
     />
 
     <h3>📅 Visite future programmate</h3>
     <AgendaTable
-      rows={visits
+      rows={visibleVisits
         .filter(v => v.nextDate && v.nextDate > new Date().toISOString().slice(0,10))
         .sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
     />
 
     <h3>📋 Storico visite effettuate</h3>
     <AgendaTable
-      rows={visits
+      rows={visibleVisits
         .filter(v => v.date < new Date().toISOString().slice(0,10))
         .sort((a,b)=>b.date.localeCompare(a.date))}
     />
