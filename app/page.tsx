@@ -330,7 +330,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -1145,6 +1145,113 @@ export default function Page() {
     📅 Pianifica visita
   </button>
 </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+)}
+
+{tab==='consigliai' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Consigli AI commerciali</h2>
+
+    <h3>🔴 Priorità urgente</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Motivo</th>
+          <th>Consiglio</th>
+          <th>Azione</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .filter(c => c.amount > 1000)
+          .filter(c => c.visits === 0 || c.status === 'Inattivo')
+          .sort((a,b)=>b.amount-a.amount)
+          .slice(0,30)
+          .map(c=>(
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>
+                {c.visits === 0
+                  ? 'Cliente importante mai visitato'
+                  : 'Cliente inattivo'}
+              </td>
+              <td>
+                Pianificare visita commerciale prioritaria.
+              </td>
+              <td>
+                <button className="btn" onClick={() => planVisit(c)}>
+                  📅 Pianifica visita
+                </button>
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+
+    <h3>🟡 Opportunità da sviluppare</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Motivo</th>
+          <th>Consiglio</th>
+          <th>Azione</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .filter(c => c.amount > 500 && c.status === 'Attivo')
+          .sort((a,b)=>b.amount-a.amount)
+          .slice(0,30)
+          .map(c=>(
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>Cliente attivo con potenziale</td>
+              <td>
+                Proporre novità, riassortimento o linea complementare.
+              </td>
+              <td>
+                <button className="btn" onClick={() => planVisit(c)}>
+                  📅 Pianifica visita
+                </button>
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+
+    <h3>📍 Zone da presidiare</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Zona</th>
+          <th>Clienti</th>
+          <th>Scoperti</th>
+          <th>Consiglio</th>
+        </tr>
+      </thead>
+      <tbody>
+        {zones
+          .filter(z => z.uncovered > 0)
+          .sort((a,b)=>b.uncovered-a.uncovered)
+          .slice(0,30)
+          .map(z=>(
+            <tr key={z.province}>
+              <td>{z.province}</td>
+              <td>{z.customers}</td>
+              <td>{z.uncovered}</td>
+              <td>Assegnare agente o programmare giro visite.</td>
             </tr>
           ))}
       </tbody>
