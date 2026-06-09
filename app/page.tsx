@@ -574,6 +574,44 @@ export default function Page() {
   Esporta report agenti
 </button>
 
+<button
+  className="btn"
+  style={{marginLeft:8}}
+  onClick={() => {
+    const testo = agents.map(a => {
+      const clientiAgente = mergedCustomers.filter(
+        c => c.agent === a.agent
+      );
+
+      const rossi = clientiAgente.filter(c => {
+        if (!c.lastOrder) return true;
+        const giorni = Math.floor(
+          (new Date().getTime() - new Date(c.lastOrder).getTime()) /
+          (1000 * 60 * 60 * 24)
+        );
+        return giorni > 120;
+      }).length;
+
+      const visiteFuture = visits.filter(
+        v => v.agent === a.agent && v.nextDate
+      ).length;
+
+      return `
+AGENTE: ${a.agent}
+Clienti: ${a.customers}
+Fatturato: ${money(a.amount)}
+Clienti da richiamare: ${rossi}
+Visite future: ${visiteFuture}
+`;
+    }).join('\n------------------\n');
+
+    navigator.clipboard.writeText(testo);
+    alert('Report copiato negli appunti');
+  }}
+>
+  📋 Copia report
+</button>
+
     <table>
       <thead>
         <tr>
