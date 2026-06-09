@@ -131,6 +131,20 @@ async function login() {
   alert(`Accesso effettuato: ${profile.agent_name}`);
 }
 
+async function logout() {
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
+
+  setUserEmail('');
+  setCurrentProfile(null);
+  setLoginEmail('');
+  setLoginPassword('');
+  setTab('dashboard');
+
+  alert('Logout effettuato');
+}
+
   function planVisit(c: any) {
   setVisitForm(v => ({
     ...v,
@@ -219,24 +233,24 @@ const visibleVisits = useMemo(() => {
 
   const zones = useMemo(() => {
     const m = new Map<string, any>();
-    mergedCustomers.forEach(c => {
+    visibleCustomers.forEach(c => {
       const z = m.get(c.province || 'ND') || { province: c.province || 'ND', amount: 0, customers: 0, active: 0, inactive: 0, uncovered: 0, agents: new Set() };
       z.amount += c.amount; z.customers++; z.active += c.status === 'Attivo' ? 1 : 0; z.inactive += c.status === 'Inattivo' ? 1 : 0; if (c.agent === 'Senza agente') z.uncovered++; else z.agents.add(c.agent);
       m.set(z.province, z);
     });
     return Array.from(m.values()).map(z => ({...z, agentsText: Array.from(z.agents).join(', ') || 'Nessun agente'}));
-  }, [mergedCustomers]);
+  }, [visibleCustomers]);
 
   const segments = useMemo(() => {
     const m = new Map<string, any>();
-    mergedCustomers.forEach(c => {
+    visibleCustomers.forEach(c => {
       const key = c.segment || 'Dati incompleti';
       const x = m.get(key) || { segment: key, customers: 0, amount: 0, inactive: 0, unassigned: 0 };
       x.customers++; x.amount += c.amount; if (c.status === 'Inattivo') x.inactive++; if (c.agent === 'Senza agente') x.unassigned++;
       m.set(key, x);
     });
     return Array.from(m.values()).sort((a,b)=>b.customers-a.customers);
-  }, [mergedCustomers]);
+  }, [visibleCustomers]);
 
   const countries = useMemo(() => {
     const m = new Map<string, any>();
@@ -413,6 +427,11 @@ const unassigned = visibleCustomers.filter(
         Accesso effettuato come <b>{currentProfile.agent_name}</b>
       </p>
       <p className="small">{userEmail}</p>
+
+<button className="btn secondary" onClick={logout}>
+  Esci
+</button>
+
     </div>
   ) : (
     <div className="grid grid-2">
@@ -446,7 +465,29 @@ const unassigned = visibleCustomers.filter(
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti', 'reportagenti', 'visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'direzione', 'zone', 'mappa', 'estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{[
+  'dashboard',
+  'clienti',
+  ...(currentProfile?.role === 'admin'
+    ? ['agenti', 'reportagenti']
+    : []),
+  'visite',
+  'agenda',
+  'calendario',
+  'girivisite',
+  'richiami',
+  'topclienti',
+  'crescita',
+  'opportunita',
+  'consigliai',
+  'direzione',
+  'zone',
+  'mappa',
+  'estero',
+  'pulizia',
+  'articoli',
+  'consigli'
+].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -852,7 +893,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => c.amount > 0)
           .filter(c => {
             if (!c.lastOrder) return true;
@@ -899,7 +940,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => {
             if (!c.lastOrder) return false;
             const giorni = Math.floor(
@@ -944,7 +985,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => c.amount > 0 && c.visits === 0)
           .sort((a,b)=>b.amount-a.amount)
           .slice(0,50)
@@ -988,7 +1029,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => {
             if (!c.lastOrder) return true;
             const giorni = Math.floor(
@@ -1029,7 +1070,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => {
             if (!c.lastOrder) return false;
             const giorni = Math.floor(
@@ -1078,7 +1119,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .sort((a,b)=>b.amount-a.amount)
           .slice(0,50)
           .map((c,index)=>(
@@ -1105,7 +1146,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .sort((a,b)=>b.visits-a.visits)
           .slice(0,50)
           .map((c,index)=>(
@@ -1131,7 +1172,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c=>c.visits===0)
           .sort((a,b)=>b.amount-a.amount)
           .slice(0,50)
@@ -1166,7 +1207,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .map(c => {
             const oggi = new Date();
             const seiMesiFa = new Date();
@@ -1224,7 +1265,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .map(c => {
             const oggi = new Date();
             const seiMesiFa = new Date();
@@ -1290,7 +1331,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => c.amount > 1000 && c.visits === 0)
           .sort((a,b)=>b.amount-a.amount)
           .slice(0,50)
@@ -1325,7 +1366,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => c.amount > 1000)
           .filter(c => {
             if (!c.lastOrder) return true;
@@ -1368,7 +1409,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => c.amount > 500)
           .filter(c => c.status === 'Attivo')
           .sort((a,b)=>b.amount-a.amount)
@@ -1412,7 +1453,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => c.amount > 1000)
           .filter(c => c.visits === 0 || c.status === 'Inattivo')
           .sort((a,b)=>b.amount-a.amount)
@@ -1451,7 +1492,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .filter(c => c.amount > 500 && c.status === 'Attivo')
           .sort((a,b)=>b.amount-a.amount)
           .slice(0,30)
@@ -1536,12 +1577,12 @@ Visite future: ${visiteFuture}
         </tr>
         <tr>
           <td>Visite future programmate</td>
-          <td>{visits.filter(v => v.nextDate).length}</td>
+          <td>{visibleVisits.filter(v => v.nextDate).length}</td>
           <td>Controllare Agenda e Calendario.</td>
         </tr>
         <tr>
           <td>Clienti mai visitati con fatturato</td>
-          <td>{mergedCustomers.filter(c => c.amount > 0 && c.visits === 0).length}</td>
+          <td>{visibleCustomers.filter(c => c.amount > 0 && c.visits === 0).length}</td>
           <td>Pianificare prime visite commerciali.</td>
         </tr>
       </tbody>
@@ -1559,7 +1600,7 @@ Visite future: ${visiteFuture}
         </tr>
       </thead>
       <tbody>
-        {mergedCustomers
+        {visibleCustomers
           .sort((a,b)=>b.amount-a.amount)
           .slice(0,10)
           .map(c=>(
