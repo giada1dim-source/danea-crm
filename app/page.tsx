@@ -145,6 +145,25 @@ async function logout() {
   alert('Logout effettuato');
 }
 
+async function loadProfile(user: any) {
+  if (!supabase || !user) return;
+
+  setUserEmail(user.email || '');
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setCurrentProfile(profile);
+}
+
   function planVisit(c: any) {
   setVisitForm(v => ({
     ...v,
@@ -158,9 +177,17 @@ async function logout() {
   setTab('visite');
 }
 
-  useEffect(() => {
+useEffect(() => {
   if (isSupabaseConfigured()) {
     loadFromSupabase();
+  }
+
+  if (supabase) {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        loadProfile(data.user);
+      }
+    });
   }
 }, []);
 
@@ -254,22 +281,22 @@ const visibleVisits = useMemo(() => {
 
   const countries = useMemo(() => {
     const m = new Map<string, any>();
-    mergedCustomers.forEach(c => {
+    visibleCustomers.forEach(c => {
       const key = isItaly(c.country) ? 'Italia' : (c.country || 'Estero non specificato');
       const x = m.get(key) || { country: key, customers: 0, amount: 0, active: 0, inactive: 0, agents: new Set() };
       x.customers++; x.amount += c.amount; x.active += c.status === 'Attivo' ? 1 : 0; x.inactive += c.status === 'Inattivo' ? 1 : 0; if (c.agent !== 'Senza agente') x.agents.add(c.agent);
       m.set(key, x);
     });
     return Array.from(m.values()).map(x=>({...x, agentsText: Array.from(x.agents).join(', ') || 'Nessun agente'})).sort((a,b)=>b.amount-a.amount);
-  }, [mergedCustomers]);
+  }, [visibleCustomers]);
 
-  const cleanupList = useMemo(() => mergedCustomers.filter(c => c.segment === 'Dati incompleti' || c.agent === 'Senza agente' || !c.email).sort((a,b)=>b.amount-a.amount).slice(0,300), [mergedCustomers]);
+  const cleanupList = useMemo(() => visibleCustomers.filter(c => c.segment === 'Dati incompleti' || c.agent === 'Senza agente' || !c.email).sort((a,b)=>b.amount-a.amount).slice(0,300), [mergedCustomers]);
 
   const items = useMemo(() => {
     const m = new Map<string, any>();
-    invoices.forEach(inv => inv.rows.forEach(r => { const k = r.description || r.code; if(!k) return; const x = m.get(k) || { item: k, qty: 0, amount: 0 }; x.qty += r.qty; x.amount += r.total; m.set(k, x); }));
+    visibleInvoices.forEach(inv => inv.rows.forEach(r => { const k = r.description || r.code; if(!k) return; const x = m.get(k) || { item: k, qty: 0, amount: 0 }; x.qty += r.qty; x.amount += r.total; m.set(k, x); }));
     return Array.from(m.values()).sort((a,b)=>b.qty-a.qty).slice(0,20);
-  }, [invoices]);
+  }, [visibleInvoices]);
 
   const monthly = useMemo(() => {
     const m = new Map<string, number>(); invoices.forEach(i => { const month = (i.date || '').slice(0,7) || 'ND'; m.set(month, (m.get(month)||0)+i.total); });
@@ -295,7 +322,7 @@ const unassigned = visibleCustomers.filter(
   async function handleCustomersFile(file: File) { const buf = await file.arrayBuffer(); const parsed = parseCustomersWorkbook(buf); setCustomers(parsed); setMessage(`Importati ${parsed.length} clienti dal file Excel.`); }
   async function handleInvoicesFile(file: File) { const text = await file.text(); const parsed = parseInvoicesXml(text); setInvoices(parsed); setMessage(`Importate ${parsed.length} fatture/documenti dal file XML.`); }
  async function addVisit() {
-  const c = mergedCustomers.find(
+  const c = visibleCustomers.find(
     x => x.code === visitForm.customerCode
   );
 
