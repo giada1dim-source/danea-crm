@@ -330,7 +330,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'direzione', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -1252,6 +1252,81 @@ export default function Page() {
               <td>{z.customers}</td>
               <td>{z.uncovered}</td>
               <td>Assegnare agente o programmare giro visite.</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+)}
+
+{tab==='direzione' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Dashboard Direzionale</h2>
+
+    <section className="grid grid-4" style={{marginBottom:18}}>
+      <Kpi icon={<Euro/>} label="Fatturato totale" value={money(totalAmount)} />
+      <Kpi icon={<Users/>} label="Clienti totali" value={mergedCustomers.length} />
+      <Kpi icon={<AlertTriangle/>} label="Clienti inattivi" value={inactive} />
+      <Kpi icon={<CalendarCheck/>} label="Visite registrate" value={visits.length} />
+    </section>
+
+    <h3>Indicatori critici</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Indicatore</th>
+          <th>Valore</th>
+          <th>Azione consigliata</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Clienti senza agente</td>
+          <td>{unassigned}</td>
+          <td>Assegnare agenti o creare zone commerciali.</td>
+        </tr>
+        <tr>
+          <td>Clienti inattivi</td>
+          <td>{inactive}</td>
+          <td>Usare Richiami e Giri visite.</td>
+        </tr>
+        <tr>
+          <td>Visite future programmate</td>
+          <td>{visits.filter(v => v.nextDate).length}</td>
+          <td>Controllare Agenda e Calendario.</td>
+        </tr>
+        <tr>
+          <td>Clienti mai visitati con fatturato</td>
+          <td>{mergedCustomers.filter(c => c.amount > 0 && c.visits === 0).length}</td>
+          <td>Pianificare prime visite commerciali.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Top 10 clienti strategici</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Agente</th>
+          <th>Fatturato</th>
+          <th>Visite</th>
+          <th>Ultimo ordine</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mergedCustomers
+          .sort((a,b)=>b.amount-a.amount)
+          .slice(0,10)
+          .map(c=>(
+            <tr key={c.code || c.name}>
+              <td>{c.name}</td>
+              <td>{c.agent}</td>
+              <td>{money(c.amount)}</td>
+              <td>{c.visits}</td>
+              <td>{c.lastOrder || '-'}</td>
             </tr>
           ))}
       </tbody>
