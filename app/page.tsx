@@ -536,6 +536,44 @@ export default function Page() {
   <div className="card" style={{padding:18}}>
     <h2>Report agenti</h2>
 
+<button
+  className="btn"
+  onClick={() => {
+    const rows = agents.map(a => {
+      const clientiAgente = mergedCustomers.filter(c => c.agent === a.agent);
+
+      const rossi = clientiAgente.filter(c => {
+        if (!c.lastOrder) return true;
+        const giorni = Math.floor(
+          (new Date().getTime() - new Date(c.lastOrder).getTime()) /
+          (1000 * 60 * 60 * 24)
+        );
+        return giorni > 120;
+      }).length;
+
+      const visiteFuture = visits.filter(
+        v => v.agent === a.agent && v.nextDate
+      ).length;
+
+      return {
+        Agente: a.agent,
+        Clienti: a.customers,
+        Fatturato: a.amount,
+        Clienti_rossi: rossi,
+        Da_richiamare: rossi,
+        Visite_future: visiteFuture
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Report agenti');
+    XLSX.writeFile(wb, 'report_agenti.xlsx');
+  }}
+>
+  Esporta report agenti
+</button>
+
     <table>
       <thead>
         <tr>
