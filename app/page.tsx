@@ -330,7 +330,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'direzione', 'zone', 'mappa', 'estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti', 'reportagenti', 'visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'direzione', 'zone', 'mappa', 'estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -529,6 +529,56 @@ export default function Page() {
       Chiudi scheda agente
     </button>
   </div>
+)}
+
+{tab==='reportagenti' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Report agenti</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Agente</th>
+          <th>Clienti</th>
+          <th>Fatturato</th>
+          <th>Clienti rossi</th>
+          <th>Da richiamare</th>
+          <th>Visite future</th>
+        </tr>
+      </thead>
+      <tbody>
+        {agents.map(a => {
+          const clientiAgente = mergedCustomers.filter(c => c.agent === a.agent);
+
+          const rossi = clientiAgente.filter(c => {
+            if (!c.lastOrder) return true;
+            const giorni = Math.floor(
+              (new Date().getTime() - new Date(c.lastOrder).getTime()) /
+              (1000 * 60 * 60 * 24)
+            );
+            return giorni > 120;
+          }).length;
+
+          const visiteFuture = visits.filter(
+            v => v.agent === a.agent && v.nextDate
+          ).length;
+
+          return (
+            <tr key={a.agent}>
+              <td><b>{a.agent}</b></td>
+              <td>{a.customers}</td>
+              <td>{money(a.amount)}</td>
+              <td>{rossi}</td>
+              <td>{rossi}</td>
+              <td>{visiteFuture}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+</section>
 )}
 
     {tab==='visite' && <section className="grid grid-2"><div className="card" style={{padding:18}}><h2>Registra visita</h2><select className="input" value={visitForm.customerCode} onChange={e=>setVisitForm({...visitForm, customerCode:e.target.value})}><option value="">Seleziona cliente</option>{mergedCustomers.map(c=><option key={c.code || c.name} value={c.code}>{c.name} — {c.agent}</option>)}</select><br/><br/><input className="input" type="date" value={visitForm.date} onChange={e=>setVisitForm({...visitForm,date:e.target.value})}/><br/><br/><select className="input" value={visitForm.outcome} onChange={e=>setVisitForm({...visitForm,outcome:e.target.value})}><option>Visita effettuata</option><option>Cliente interessato</option><option>Ordine previsto</option><option>Nessun interesse</option><option>Cliente chiuso / da recuperare</option></select><br/><br/><input className="input" type="date" value={visitForm.nextDate} onChange={e=>setVisitForm({...visitForm,nextDate:e.target.value})}/><br/><br/><textarea className="input" placeholder="Note visita" value={visitForm.notes} onChange={e=>setVisitForm({...visitForm,notes:e.target.value})}/><br/><br/><button className="btn" onClick={addVisit}>Salva visita</button> <button className="btn secondary" onClick={exportVisits}>Esporta visite</button></div><div className="card table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Agente</th><th>Esito</th><th>Prossima</th><th>Note</th></tr></thead><tbody>{visits.map(v=><tr key={v.id}><td>{v.date}</td><td>{v.customerName}</td><td>{v.agent}</td><td>{v.outcome}</td><td>{v.nextDate}</td><td>{v.notes}</td></tr>)}</tbody></table></div></section>}
