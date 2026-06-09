@@ -441,7 +441,7 @@ export default function Page() {
     setTab('visite');
   }}
 >
-  Nuova visita
+  📅 Pianifica visita
 </button>
 
     <button onClick={() => setSelectedCustomer(null)}>
@@ -762,7 +762,14 @@ export default function Page() {
               <td>{c.agent}</td>
               <td>{c.lastOrder || '-'}</td>
               <td>{money(c.amount)}</td>
-              <td>Richiamare</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
@@ -796,7 +803,14 @@ export default function Page() {
               <td>{c.agent}</td>
               <td>{c.lastOrder}</td>
               <td>{money(c.amount)}</td>
-              <td>Controllare</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
@@ -1044,7 +1058,14 @@ export default function Page() {
               <td>{c.agent}</td>
               <td>{money(c.amount)}</td>
               <td>{c.lastOrder || '-'}</td>
-              <td>Prima visita commerciale</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
@@ -1080,7 +1101,14 @@ export default function Page() {
               <td>{c.agent}</td>
               <td>{money(c.amount)}</td>
               <td>{c.lastOrder || '-'}</td>
-              <td>Recupero prioritario</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
@@ -1109,7 +1137,14 @@ export default function Page() {
               <td>{c.agent}</td>
               <td>{money(c.amount)}</td>
               <td>{c.lastOrder || '-'}</td>
-              <td>Proporre riassortimento / novità</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
