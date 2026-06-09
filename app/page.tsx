@@ -330,7 +330,7 @@ export default function Page() {
       <Kpi icon={<Globe2/>} label="Clienti estero" value={mergedCustomers.filter(c=>c.segment==='Estero').length} />
       <Kpi icon={<Database/>} label="Dati incompleti" value={mergedCustomers.filter(c=>c.segment==='Dati incompleti').length} />
     </section>
-    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'direzione', 'zone','estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
+    <nav className="nav" style={{marginBottom:18}}>{['dashboard','clienti','agenti','visite','agenda', 'calendario', 'girivisite', 'richiami', 'topclienti', 'crescita', 'opportunita', 'consigliai', 'direzione', 'zone', 'mappa', 'estero','pulizia','articoli','consigli'].map(t=><button key={t} className={tab===t?'active':''} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)}</button>)}</nav>
 
     {tab==='dashboard' && <section className="grid grid-2"><Panel title="Fatturato mensile"><ResponsiveContainer width="100%" height={320}><LineChart data={monthly}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>money(v)}/><Line dataKey="amount" strokeWidth={3}/></LineChart></ResponsiveContainer></Panel><Panel title="Stato clienti"><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={[{name:'Attivi',value:mergedCustomers.length-inactive},{name:'Inattivi',value:inactive}]} dataKey="value" label outerRadius={110}>{[0,1].map(i=><Cell key={i}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer></Panel></section>}
 
@@ -1336,6 +1336,65 @@ export default function Page() {
 )}
 
     {tab==='zone' && <section className="grid grid-2"><div className="card" style={{padding:18}}><h2><MapPin size={20}/> Mappa zone</h2><div className="map">{zones.map(z=>{const p=provinceCoords[z.province]||{x:50,y:50}; return <div key={z.province} className={`pin ${z.uncovered?'bad':'ok'}`} style={{left:`${p.x}%`,top:`${p.y}%`}} title={`${z.province}: ${z.customers} clienti`}>{z.province}</div>})}</div></div><div className="card table-wrap"><table><thead><tr><th>Provincia</th><th>Clienti</th><th>Vendite</th><th>Agenti</th><th>Scoperti</th></tr></thead><tbody>{zones.map(z=><tr key={z.province}><td><b>{z.province}</b></td><td>{z.customers}</td><td>{money(z.amount)}</td><td>{z.agentsText}</td><td><span className={`badge ${z.uncovered?'bad':'ok'}`}>{z.uncovered}</span></td></tr>)}</tbody></table></div></section>}
+
+{tab==='mappa' && (
+<section className="grid">
+  <div className="card" style={{padding:18}}>
+    <h2>Mappa clienti per zona</h2>
+
+    <p className="small">
+      Vista commerciale per provincia: più clienti e fatturato ha una zona, più è importante presidiarla.
+    </p>
+
+    <div className="map">
+      {zones.map(z => {
+        const p = provinceCoords[z.province] || {x:50,y:50};
+
+        return (
+          <div
+            key={z.province}
+            className={`pin ${z.uncovered ? 'bad' : 'ok'}`}
+            style={{
+              left: `${p.x}%`,
+              top: `${p.y}%`
+            }}
+            title={`${z.province}: ${z.customers} clienti - ${money(z.amount)}`}
+          >
+            {z.province}
+          </div>
+        );
+      })}
+    </div>
+
+    <h3>Dettaglio zone</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Provincia</th>
+          <th>Clienti</th>
+          <th>Fatturato</th>
+          <th>Agenti</th>
+          <th>Clienti scoperti</th>
+        </tr>
+      </thead>
+      <tbody>
+        {zones
+          .sort((a,b)=>b.amount-a.amount)
+          .map(z=>(
+            <tr key={z.province}>
+              <td>{z.province}</td>
+              <td>{z.customers}</td>
+              <td>{money(z.amount)}</td>
+              <td>{z.agentsText}</td>
+              <td>{z.uncovered}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+</section>
+)}
 
     {tab==='estero' && <section className="grid grid-2"><Panel title="Clienti per segmento"><ResponsiveContainer width="100%" height={320}><BarChart data={segments}><XAxis dataKey="segment"/><YAxis/><Tooltip formatter={(v:any,n:any)=>n==='amount'?money(v):v}/><Bar dataKey="customers" name="Clienti"/><Bar dataKey="amount" name="Vendite"/></BarChart></ResponsiveContainer></Panel><div className="card table-wrap"><table><thead><tr><th>Nazione</th><th>Clienti</th><th>Vendite</th><th>Attivi</th><th>Inattivi</th><th>Agenti</th></tr></thead><tbody>{countries.map(c=><tr key={c.country}><td><b>{c.country}</b></td><td>{c.customers}</td><td>{money(c.amount)}</td><td>{c.active}</td><td>{c.inactive}</td><td>{c.agentsText}</td></tr>)}</tbody></table></div></section>}
 
