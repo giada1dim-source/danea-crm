@@ -96,6 +96,19 @@ export default function Page() {
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<any | null>(null);
 
+  function planVisit(c: any) {
+  setVisitForm(v => ({
+    ...v,
+    customerCode: c.code,
+    date: new Date().toISOString().slice(0,10),
+    outcome: 'Visita effettuata',
+    nextDate: '',
+    notes: ''
+  }));
+
+  setTab('visite');
+}
+
   useEffect(() => {
   if (isSupabaseConfigured()) {
     loadFromSupabase();
@@ -617,7 +630,14 @@ export default function Page() {
               <td>{money(c.amount)}</td>
               <td>{c.lastOrder || '-'}</td>
               <td>{c.visits}</td>
-              <td>Inserire nel giro visite</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
@@ -656,7 +676,14 @@ export default function Page() {
               <td>{money(c.amount)}</td>
               <td>{c.lastOrder || '-'}</td>
               <td>{c.visits}</td>
-              <td>Programmare visita</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
@@ -686,7 +713,14 @@ export default function Page() {
               <td>{c.city} {c.province}</td>
               <td>{money(c.amount)}</td>
               <td>{c.lastOrder || '-'}</td>
-              <td>Prima visita</td>
+              <td>
+  <button
+    className="btn"
+    onClick={() => planVisit(c)}
+  >
+    📅 Pianifica visita
+  </button>
+</td>
             </tr>
           ))}
       </tbody>
